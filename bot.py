@@ -60,10 +60,10 @@ if __name__ == '__main__':
         states={
             PASSWORD_CHECK: [MessageHandler(filters=Filters.text, callback=check_pass)],
 
-            DOCUMENT: [MessageHandler(filters=Filters.document, callback=get_document, pass_user_data=True)],
+            DOCUMENT: [MessageHandler(filters=Filters.document, callback=get_document)],
         },
 
-        fallbacks=[CommandHandler('reset', start, pass_user_data=True)]
+        fallbacks=[CommandHandler('reset', start)]
     )
 
     dp.add_handler(conv_handler)
