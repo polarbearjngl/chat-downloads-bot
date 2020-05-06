@@ -15,8 +15,8 @@ def error(bot, update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
 
-def start(bot, update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="I'm a bot, please talk to me!")
+def start(bot, update):
+    bot.send_message(chat_id=update.effective_chat.id, text='Yor are ' + update.effective_user.username)
 
 def run(updater_instance):
     updater_instance.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN)
