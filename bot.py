@@ -12,6 +12,7 @@ TOKEN = os.getenv("TOKEN")
 PORT = int(os.environ.get("PORT", "8443"))
 HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
 LIST_OF_ADMINS = map(int, os.environ.get("LIST_OF_ADMINS").split(','))
+TARGET_CHAT = int(os.environ.get("TARGET_CHATS"))
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -59,9 +60,11 @@ def get_document(bot, update):
 
     start_menu = Menu(buttons=MenuList.DOWNLOAD_BTN, col_num=1).build_menu()
     reply_markup = InlineKeyboardMarkup(start_menu)
-    update.message.reply_html(text='Download file {}, uploaded by {}, ID={}'.format(
-        msg.to_dict()['document']['file_name'],
-        msg.to_dict()['from']['username'], msg.to_dict()['document']['file_id']),
+    bot.send_message(
+        chat_id=TARGET_CHAT,
+        text='Download file {}, uploaded by {}, ID={}'.format(
+            msg.to_dict()['document']['file_name'],
+            msg.to_dict()['from']['username'], msg.to_dict()['document']['file_id']),
         reply_markup=reply_markup)
 
     start(bot=bot, update=update)
