@@ -1,5 +1,6 @@
 import logging
 import os
+from functools import wraps
 
 from telegram import InlineKeyboardMarkup
 from telegram.ext import (Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackQueryHandler)
@@ -9,19 +10,31 @@ from menu import Menu, MenuList
 TOKEN = os.getenv("TOKEN")
 PORT = int(os.environ.get("PORT", "8443"))
 HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
-MASTER_PSW = os.environ.get("MASTER_PSW")
+LIST_OF_ADMINS = map(int, os.environ.get("LIST_OF_ADMINS").split(','))
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-PASSWORD_CHECK, DOCUMENT = range(2)
+CHECK_ACCESS, GET_DOCUMENT = range(2)
 
 
 def error(bot, update, context):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, context.error)
+
+
+def restricted(func):
+    @wraps(func)
+    def wrapped(bot, update, *args, **kwargs):
+        user_id = update.effective_user.id
+        if user_id not in LIST_OF_ADMINS:
+            update.message.reply_text(text='You unauthorized for this action. Stop there your criminal scum.')
+            print("Unauthorized access denied for {}.".format(user_id))
+            return
+        return func(bot, update, *args, **kwargs)
+    return wrapped
 
 
 def start(bot, update):
@@ -31,16 +44,13 @@ def start(bot, update):
 
 def upload(bot, update):
     update.message.reply_text(text='Enter password for proceed upload process')
-    return PASSWORD_CHECK
+    return CHECK_ACCESS
 
 
-def check_pass(bot, update):
-    if MASTER_PSW == update.effective_message.text:
-        update.message.reply_text(text='Password is correct. Upload document to bot')
-        return DOCUMENT
-    else:
-        update.message.reply_text(text='Password is incorrect. Try one more time, or call /reset')
-        return PASSWORD_CHECK
+@restricted
+def check_access(bot, update):
+    update.message.reply_text(text='You have access for this action. Upload document to bot')
+    return GET_DOCUMENT
 
 
 def get_document(bot, update):
@@ -63,7 +73,7 @@ def call_handler(bot, update, user_data):
     message_id = query.message.message_id
     chat_id = query.message.chat_id
     from_user = query.from_user.to_json()
-    user_data['chat_id'], user_data['from_user'], user_data['query'] = chat_id, from_user, query.to_json()
+    user_data['from_user'], user_data['query'] = from_user, query.to_json()
 
     if qdata == 'download_file':
         bot.send_message(chat_id=update.effective_chat.id,
@@ -88,9 +98,9 @@ if __name__ == '__main__':
         entry_points=[CommandHandler('upload', upload)],
 
         states={
-            PASSWORD_CHECK: [MessageHandler(filters=Filters.text, callback=check_pass)],
+            CHECK_ACCESS: [MessageHandler(filters=Filters.text, callback=check_access)],
 
-            DOCUMENT: [MessageHandler(filters=Filters.document, callback=get_document)],
+            GET_DOCUMENT: [MessageHandler(filters=Filters.document, callback=get_document)],
         },
 
         fallbacks=[CommandHandler('reset', start)]
