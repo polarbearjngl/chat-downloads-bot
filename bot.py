@@ -1,6 +1,10 @@
 import logging
 import os
-from telegram.ext import (Updater, CommandHandler, ConversationHandler, MessageHandler, Filters)
+
+from telegram import InlineKeyboardMarkup
+from telegram.ext import (Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackQueryHandler)
+
+from menu import Menu, MenuList
 
 TOKEN = os.getenv("TOKEN")
 PORT = int(os.environ.get("PORT", "8443"))
@@ -32,14 +36,37 @@ def upload(bot, update):
 
 def check_pass(bot, update):
     if MASTER_PSW == update.effective_message.text:
+        update.message.reply_text(text='Password is correct. Upload document to bot')
         return DOCUMENT
     else:
-        return start(bot=bot, update=update)
+        update.message.reply_text(text='Password is incorrect. Try one more time, or call /reset')
+        return PASSWORD_CHECK
 
 
 def get_document(bot, update):
     msg = update.effective_message
-    update.message.reply_text(text=msg.to_dict())
+
+    start_menu = Menu(buttons=MenuList.DOWNLOAD_BTN, col_num=1).build_menu()
+    reply_markup = InlineKeyboardMarkup(start_menu)
+    update.message.reply_html(text='Download file {}, uploaded by {}, ID={}'.format(
+        msg.to_dict()['document']['file_name'],
+        msg.to_dict()['from']['username'], msg.to_dict()['document']['file_id']),
+        reply_markup=reply_markup)
+
+    start(bot=bot, update=update)
+
+
+def call_handler(bot, update, user_data):
+    query = update.callback_query
+    query_id = update.callback_query.id
+    qdata = query.data
+    message_id = query.message.message_id
+    chat_id = query.message.chat_id
+    user_id = query.from_user.id
+    user_data['chat_id'], user_data['username'] = chat_id, user_id
+
+    if qdata == 'download_file':
+        update.message.reply_text(text=user_data)
 
 
 def run(updater_instance):
@@ -65,8 +92,10 @@ if __name__ == '__main__':
 
         fallbacks=[CommandHandler('reset', start)]
     )
-
     dp.add_handler(conv_handler)
+
+    updater.dispatcher.add_handler(CallbackQueryHandler(callback=call_handler, pass_user_data=True))
+
     # log all errors
     dp.add_error_handler(error)
     run(updater)
