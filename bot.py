@@ -76,13 +76,7 @@ def call_handler(bot, update, user_data):
     from_user = query.from_user
 
     if qdata == 'download_file':
-        bot.send_message(chat_id=update.effective_chat.id,
-                         text=query.message.text)
-
-        bot.send_message(chat_id=update.effective_chat.id,
-                         text=re.findall(r'ID=(.*)', query.message.text)[0])
-
-        bot.send_document(document=re.findall(r'ID=(.*)', query.message.text)[0])
+        from_user.send_document(document=re.findall(r'ID=(.*)', query.message.text)[0])
 
 
 def run(updater_instance):
