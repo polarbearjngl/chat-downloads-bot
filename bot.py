@@ -80,9 +80,9 @@ def call_handler(bot, update, user_data):
                          text=query.message.text)
 
         bot.send_message(chat_id=update.effective_chat.id,
-                         text=re.search(r'ID=(.*)', query.message.text).lastgroup)
+                         text=re.findall(r'ID=(.*)', query.message.text)[0])
 
-        bot.send_document(document=re.search(r'ID=(.*)', user_data['query']['message']['text']).lastgroup)
+        bot.send_document(document=re.findall(r'ID=(.*)', query.message.text)[0])
 
 
 def run(updater_instance):
