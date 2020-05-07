@@ -63,7 +63,7 @@ def call_handler(bot, update, user_data):
     message_id = query.message.message_id
     chat_id = query.message.chat_id
     from_user = query.from_user.to_json()
-    user_data['chat_id'], user_data['from_user'], user_data['query'] = chat_id, from_user, query
+    user_data['chat_id'], user_data['from_user'], user_data['query'] = chat_id, from_user, query.to_json()
 
     if qdata == 'download_file':
         bot.send_message(chat_id=update.effective_chat.id,
