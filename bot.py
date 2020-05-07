@@ -44,6 +44,7 @@ def start(bot, update):
 
 
 def upload(bot, update):
+    update.message.reply_text(text='Say Friend and enter')
     return CHECK_ACCESS
 
 
@@ -72,15 +73,14 @@ def call_handler(bot, update, user_data):
     qdata = query.data
     message_id = query.message.message_id
     chat_id = query.message.chat_id
-    from_user = query.from_user.to_json()
-    user_data['from_user'], user_data['query'] = from_user, query.to_json()
+    from_user = query.from_user
 
     if qdata == 'download_file':
         bot.send_message(chat_id=update.effective_chat.id,
-                         text=user_data['query']['message']['text'])
+                         text=query.message.text)
 
         bot.send_message(chat_id=update.effective_chat.id,
-                         text=re.search(r'ID=(.*)', user_data['query']['message']['text']).lastgroup)
+                         text=re.search(r'ID=(.*)', query.message.text).lastgroup)
 
         bot.send_document(document=re.search(r'ID=(.*)', user_data['query']['message']['text']).lastgroup)
 
