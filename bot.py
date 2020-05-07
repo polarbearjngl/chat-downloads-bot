@@ -31,7 +31,7 @@ def restricted(func):
     def wrapped(bot, update, *args, **kwargs):
         user_id = update.effective_user.id
         if user_id not in LIST_OF_ADMINS:
-            update.message.reply_text(text='You unauthorized for this action. Stop there your criminal scum. {}'.format(str(user_id)))
+            update.message.reply_text(text='You unauthorized for this action. Stop there your criminal scum.')
             print("Unauthorized access denied for {}.".format(user_id))
             return
         return func(bot, update, *args, **kwargs)
@@ -81,7 +81,7 @@ def call_handler(bot, update, user_data):
 
 @restricted
 def get_chat_id(bot, update):
-    bot.send_message(chat_id=update.effective_chat.id, text='This chat_id is ' + update.effective_chat.id)
+    bot.send_message(chat_id=update.effective_chat.id, text='This chat_id is ' + str(update.effective_chat.id))
 
 
 def run(updater_instance):
