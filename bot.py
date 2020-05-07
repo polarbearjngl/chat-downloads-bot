@@ -66,7 +66,8 @@ def call_handler(bot, update, user_data):
     user_data['chat_id'], user_data['username'] = chat_id, user_id
 
     if qdata == 'download_file':
-        update.message.reply_text(text=user_data)
+        bot.send_message(chat_id=update.effective_chat.id,
+                         text=user_data)
 
 
 def run(updater_instance):
