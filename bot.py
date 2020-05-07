@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from functools import wraps
 
 from telegram import InlineKeyboardMarkup
@@ -43,7 +44,6 @@ def start(bot, update):
 
 
 def upload(bot, update):
-    update.message.reply_text(text='Enter password for proceed upload process')
     return CHECK_ACCESS
 
 
@@ -77,9 +77,12 @@ def call_handler(bot, update, user_data):
 
     if qdata == 'download_file':
         bot.send_message(chat_id=update.effective_chat.id,
-                         text=user_data)
+                         text=user_data['query']['message']['text'])
 
-        # bot.send_document(document=)
+        bot.send_message(chat_id=update.effective_chat.id,
+                         text=re.search(r'ID=(.*)', user_data['query']['message']['text']).lastgroup)
+
+        bot.send_document(document=re.search(r'ID=(.*)', user_data['query']['message']['text']).lastgroup)
 
 
 def run(updater_instance):
