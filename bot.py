@@ -79,6 +79,11 @@ def call_handler(bot, update, user_data):
         from_user.send_document(document=re.findall(r'ID=(.*)', query.message.text)[0])
 
 
+@restricted
+def get_chat_id(bot, update):
+    bot.send_message(chat_id=update.effective_chat.id, text='This chat_id is ' + update.effective_chat.id)
+
+
 def run(updater_instance):
     updater_instance.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN)
     updater_instance.bot.set_webhook("https://{}.herokuapp.com/{}".format(HEROKU_APP_NAME, TOKEN))
@@ -90,6 +95,9 @@ if __name__ == '__main__':
 
     start_handler = CommandHandler('start', start)
     dp.add_handler(start_handler)
+
+    chat_id_handler = CommandHandler('get_chat_id', get_chat_id)
+    dp.add_handler(chat_id_handler)
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('upload', upload)],
