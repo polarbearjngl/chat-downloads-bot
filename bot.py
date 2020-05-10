@@ -32,7 +32,7 @@ def restricted(func):
     def wrapped(bot, update, *args, **kwargs):
         user_id = update.effective_user.id
         if user_id not in LIST_OF_ADMINS:
-            update.message.reply_text(text='You unauthorized for this action. Stop there your criminal scum.')
+            update.message.reply_text(text='У тебя нет прав для этого действия.')
             print("Unauthorized access denied for {}.".format(user_id))
             return
         return func(bot, update, *args, **kwargs)
@@ -40,12 +40,13 @@ def restricted(func):
 
 
 def start(bot, update):
-    bot.send_message(chat_id=update.effective_chat.id, text='Hello there, ' + update.effective_user.username +
-                                                            '. Call /upload command to start upload.')
+    bot.send_message(chat_id=update.effective_chat.id, text='Приветствую тебя, ' + update.effective_user.username +
+                                                            '. Напиши команду /upload чтобы начать загрузку.')
 
 
 @restricted
 def upload(bot, update):
+    update.message.reply_text(text='Теперь ты можешь загрузить файл в сообщения боту.')
     return GET_DOCUMENT
 
 
@@ -56,9 +57,11 @@ def get_document(bot, update):
     reply_markup = InlineKeyboardMarkup(start_menu)
     bot.send_message(
         chat_id=TARGET_CHAT,
-        text='Download file {}, uploaded by {}, ID={}'.format(
+        text='Скачать файл <b>{}<b>\nФайл загружен {}\nID={}'.format(
             msg.to_dict()['document']['file_name'],
-            msg.to_dict()['from']['username'], msg.to_dict()['document']['file_id']),
+            msg.to_dict()['from']['username'],
+            msg.to_dict()['document']['file_id']),
+        parse_mode='HTML',
         reply_markup=reply_markup)
 
     start(bot=bot, update=update)
