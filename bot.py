@@ -57,7 +57,7 @@ def get_document(bot, update):
     reply_markup = InlineKeyboardMarkup(start_menu)
     bot.send_message(
         chat_id=TARGET_CHAT,
-        text='Скачать файл <b>{}<b>\nФайл загружен {}\nID={}'.format(
+        text='Скачать файл <b>{}</b>\nФайл загружен {}\nID={}'.format(
             msg.to_dict()['document']['file_name'],
             msg.to_dict()['from']['username'],
             msg.to_dict()['document']['file_id']),
