@@ -44,14 +44,8 @@ def start(bot, update):
                                                             '. Call /upload command to start upload.')
 
 
-def upload(bot, update):
-    update.message.reply_text(text='Say Friend and enter')
-    return CHECK_ACCESS
-
-
 @restricted
-def check_access(bot, update):
-    update.message.reply_text(text='You have access for this action. Upload document to bot')
+def upload(bot, update):
     return GET_DOCUMENT
 
 
@@ -106,8 +100,6 @@ if __name__ == '__main__':
         entry_points=[CommandHandler('upload', upload)],
 
         states={
-            CHECK_ACCESS: [MessageHandler(filters=Filters.text, callback=check_access)],
-
             GET_DOCUMENT: [MessageHandler(filters=Filters.document, callback=get_document)],
         },
 
