@@ -76,5 +76,6 @@ def call_handler(bot, update):
                             is_bot=from_user.is_bot,
                             download_date=datetime.now(),
                             filename="test")
+        downloads_db.close()
 
         from_user.send_message(text=query.message.to_json())
