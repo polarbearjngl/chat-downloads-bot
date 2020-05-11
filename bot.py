@@ -1,25 +1,21 @@
 import logging
 import os
-import re
 from functools import wraps
-
-from telegram import InlineKeyboardMarkup
 from telegram.ext import (Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackQueryHandler)
 
-from menu import Menu, MenuList
+from common import GET_DOCUMENT, START, RESET, UPLOAD, GET_CHAT_ID
+from handlers import start, get_chat_id, upload, get_document, call_handler, reset
 
 TOKEN = os.getenv("TOKEN")
 PORT = int(os.environ.get("PORT", "8443"))
 HEROKU_APP_NAME = os.environ.get("HEROKU_APP_NAME")
 LIST_OF_ADMINS = map(int, os.environ.get("LIST_OF_ADMINS").split(','))
 TARGET_CHAT = int(os.environ.get("TARGET_CHATS"))
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-CHECK_ACCESS, GET_DOCUMENT = range(2)
 
 
 def error(bot, update, context):
@@ -28,6 +24,7 @@ def error(bot, update, context):
 
 
 def restricted(func):
+    """check that user is in list of admins for bot before run command."""
     @wraps(func)
     def wrapped(bot, update, *args, **kwargs):
         user_id = update.effective_user.id
@@ -39,51 +36,6 @@ def restricted(func):
     return wrapped
 
 
-def start(bot, update):
-    bot.send_message(chat_id=update.effective_chat.id, text='Приветствую тебя, ' + update.effective_user.username +
-                                                            '. Напиши команду /upload чтобы начать загрузку.')
-
-
-@restricted
-def upload(bot, update):
-    update.message.reply_text(text='Теперь ты можешь загрузить файл в сообщения боту.')
-    return GET_DOCUMENT
-
-
-def get_document(bot, update):
-    msg = update.effective_message
-
-    start_menu = Menu(buttons=MenuList.DOWNLOAD_BTN, col_num=1).build_menu()
-    reply_markup = InlineKeyboardMarkup(start_menu)
-    bot.send_message(
-        chat_id=TARGET_CHAT,
-        text='Скачать файл <b>{}</b>\nФайл загружен {}\nID={}'.format(
-            msg.to_dict()['document']['file_name'],
-            msg.to_dict()['from']['username'],
-            msg.to_dict()['document']['file_id']),
-        parse_mode='HTML',
-        reply_markup=reply_markup)
-
-    start(bot=bot, update=update)
-
-
-def call_handler(bot, update, user_data):
-    query = update.callback_query
-    query_id = update.callback_query.id
-    qdata = query.data
-    message_id = query.message.message_id
-    chat_id = query.message.chat_id
-    from_user = query.from_user
-
-    if qdata == 'download_file':
-        from_user.send_document(document=re.findall(r'ID=(.*)', query.message.text)[0])
-
-
-@restricted
-def get_chat_id(bot, update):
-    bot.send_message(chat_id=update.effective_chat.id, text='This chat_id is ' + str(update.effective_chat.id))
-
-
 def run(updater_instance):
     updater_instance.start_webhook(listen="0.0.0.0", port=PORT, url_path=TOKEN)
     updater_instance.bot.set_webhook("https://{}.herokuapp.com/{}".format(HEROKU_APP_NAME, TOKEN))
@@ -93,24 +45,24 @@ if __name__ == '__main__':
     updater = Updater(TOKEN)
     dp = updater.dispatcher
 
-    start_handler = CommandHandler('start', start)
+    start_handler = CommandHandler(START, start)
     dp.add_handler(start_handler)
 
-    chat_id_handler = CommandHandler('get_chat_id', get_chat_id)
+    chat_id_handler = CommandHandler(GET_CHAT_ID, get_chat_id)
     dp.add_handler(chat_id_handler)
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('upload', upload)],
+        entry_points=[CommandHandler(UPLOAD, upload)],
 
         states={
             GET_DOCUMENT: [MessageHandler(filters=Filters.document, callback=get_document)],
         },
 
-        fallbacks=[CommandHandler('reset', start)]
+        fallbacks=[CommandHandler(RESET, reset)]
     )
     dp.add_handler(conv_handler)
 
-    updater.dispatcher.add_handler(CallbackQueryHandler(callback=call_handler, pass_user_data=True))
+    updater.dispatcher.add_handler(CallbackQueryHandler(callback=call_handler))
 
     # log all errors
     dp.add_error_handler(error)

@@ -1,5 +1,7 @@
 from telegram import InlineKeyboardButton
 
+from common import DOWNLOAD_FILE
+
 
 class Menu(object):
     """Class for creating inline menu for telegram"""
@@ -21,4 +23,4 @@ class Menu(object):
 class MenuList(object):
     """List of menu for this bot"""
 
-    DOWNLOAD_BTN = [InlineKeyboardButton(text=u"Download file", callback_data='download_file')]
+    DOWNLOAD_BTN = [InlineKeyboardButton(text=u"Скачать файл", callback_data=DOWNLOAD_FILE)]
