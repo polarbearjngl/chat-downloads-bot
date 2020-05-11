@@ -18,14 +18,20 @@ class DownloadsDb(PgClient):
         return self.execute_sql_statement_mapped(sql=sql_load_all)
 
     def insert(self, first_name, last_name, username, is_bot, download_date, filename):
-        sql_insert = """INSERT INTO downloads 
-                        VALUES     (DEFAULT, 
-                                    :first_name 
-                                    :last_name, 
-                                    :username, 
-                                    :is_bot, 
-                                    :download_date, 
-                                    :filename) """
+        sql_insert = """INSERT INTO downloads
+                                    (id,
+                                     first_name,
+                                     last_name,
+                                     username,
+                                     is_bot,
+                                     download_date,
+                                     filename)
+                        VALUES      (DEFAULT,
+                                     :first_name :last_name,
+                                     :username,
+                                     :is_bot,
+                                     :download_date,
+                                     :filename)"""
         self.execute_sql_statement_with_commit(sql=sql_insert,
                                                first_name=first_name,
                                                last_name=last_name,
