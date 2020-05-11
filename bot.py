@@ -2,9 +2,8 @@ import logging
 import os
 from functools import wraps
 from telegram.ext import (Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackQueryHandler)
-
-from common import GET_DOCUMENT, START, RESET, UPLOAD, GET_CHAT_ID
-from handlers import start, get_chat_id, upload, get_document, call_handler, reset
+from .common import GET_DOCUMENT, START, RESET, UPLOAD, GET_CHAT_ID
+from .handlers import start, get_chat_id, upload, get_document, call_handler, reset
 
 TOKEN = os.getenv("TOKEN")
 PORT = int(os.environ.get("PORT", "8443"))

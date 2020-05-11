@@ -5,7 +5,6 @@ from common import GET_DOCUMENT, DOWNLOAD_FILE
 from menu import Menu, MenuList
 from telegram import InlineKeyboardMarkup
 import re
-
 from postgress.downloads_db import DownloadsDb
 
 
