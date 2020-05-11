@@ -1,11 +1,24 @@
 from datetime import datetime
+from functools import wraps
 
-from bot import restricted, TARGET_CHAT, DATABASE_URL
-from common import GET_DOCUMENT, DOWNLOAD_FILE
+from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, LIST_OF_ADMINS, DATABASE_URL
 from menu import Menu, MenuList
 from telegram import InlineKeyboardMarkup
 import re
 from postgress.downloads_db import DownloadsDb
+
+
+def restricted(func):
+    """check that user is in list of admins for bot before run command."""
+    @wraps(func)
+    def wrapped(bot, update, *args, **kwargs):
+        user_id = update.effective_user.id
+        if user_id not in LIST_OF_ADMINS:
+            update.message.reply_text(text='У тебя нет прав для этого действия.')
+            print("Unauthorized access denied for {}.".format(user_id))
+            return
+        return func(bot, update, *args, **kwargs)
+    return wrapped
 
 
 def start(bot, update):
@@ -63,3 +76,5 @@ def call_handler(bot, update):
                             is_bot=from_user.is_bot,
                             download_date=datetime.now(),
                             filename="test")
+
+        from_user.send_message(text=query.message.to_json())

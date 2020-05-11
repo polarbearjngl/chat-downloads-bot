@@ -1,6 +1,6 @@
 from telegram import InlineKeyboardButton
 
-from common import DOWNLOAD_FILE
+from bot.common import DOWNLOAD_FILE
 
 
 class Menu(object):
