@@ -1,9 +1,10 @@
+import os
 from datetime import datetime
 from functools import wraps
 
 import pytz
 
-from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, LIST_OF_ADMINS, DATABASE_URL
+from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL
 from menu import Menu, MenuList
 from telegram import InlineKeyboardMarkup
 import re
@@ -15,7 +16,7 @@ def restricted(func):
     @wraps(func)
     def wrapped(bot, update, *args, **kwargs):
         user_id = update.effective_user.id
-        if user_id not in LIST_OF_ADMINS:
+        if user_id not in map(int, os.environ.get("LIST_OF_ADMINS").split(',')):
             update.message.reply_text(text='У тебя нет прав для этого действия.')
             print("Unauthorized access denied for {}.".format(user_id))
             return
