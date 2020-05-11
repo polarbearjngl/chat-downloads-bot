@@ -77,5 +77,6 @@ def call_handler(bot, update):
                             username=from_user.username,
                             is_bot=from_user.is_bot,
                             download_date=datetime.now(tz=pytz.timezone('Europe/Moscow')),
-                            filename=re.findall(u'Скачать файл: (.*)', query.message.to_json()['text'])[0])
+                            filename=re.findall(r'\u0421\u043a\u0430\u0447\u0430\u0442\u044c \u0444\u0430\u0439\u043b: (.*)',
+                                                query.message.to_json()['text'])[0])
         downloads_db.close()
