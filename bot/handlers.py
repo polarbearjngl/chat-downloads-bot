@@ -77,5 +77,5 @@ def call_handler(bot, update):
                             username=from_user.username,
                             is_bot=from_user.is_bot,
                             download_date=datetime.now(tz=pytz.timezone('Europe/Moscow')),
-                            filename=re.findall(r'file: (.*)', query.message.to_json()['text'])[0])
+                            filename=re.findall(r'file: (.*)', query.message.text)[0])
         downloads_db.close()
