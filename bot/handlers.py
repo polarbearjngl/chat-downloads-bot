@@ -51,7 +51,7 @@ def get_document(bot, update):
     reply_markup = InlineKeyboardMarkup(start_menu)
     bot.send_message(
         chat_id=TARGET_CHAT,
-        text='Скачать файл: <b>{}</b>\nФайл загружен: {}\nID={}'.format(
+        text='file: <b>{}</b>\nauthor: {}\nID={}'.format(
             msg.to_dict()['document']['file_name'],
             msg.to_dict()['from']['username'],
             msg.to_dict()['document']['file_id']),
@@ -77,6 +77,5 @@ def call_handler(bot, update):
                             username=from_user.username,
                             is_bot=from_user.is_bot,
                             download_date=datetime.now(tz=pytz.timezone('Europe/Moscow')),
-                            filename=re.findall(r'\u0421\u043a\u0430\u0447\u0430\u0442\u044c \u0444\u0430\u0439\u043b: (.*)',
-                                                query.message.to_json()['text'])[0])
+                            filename=re.findall(r'file: (.*)', query.message.to_json()['text'])[0])
         downloads_db.close()
