@@ -27,7 +27,8 @@ class DownloadsDb(PgClient):
                                      download_date,
                                      filename)
                         VALUES      (DEFAULT,
-                                     :first_name :last_name,
+                                     :first_name,
+                                     :last_name,
                                      :username,
                                      :is_bot,
                                      :download_date,
