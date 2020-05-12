@@ -5,11 +5,11 @@ from openpyxl import load_workbook
 
 
 class ExcelTable(dict):
-    """Базовый класс для создания объекта эксель-таблицы."""
+    """Base class for excel table."""
 
-    # Наименования колонок, которые должны присутствовать в таблице
+    # column names for table
     COLUMNS = []
-    # Наименование директории, в которую должен быть сохранен отчет
+    # dir name for saving file
     DIR_NAME = ''
     EXTENSION = '.xlsx'
 
@@ -17,7 +17,7 @@ class ExcelTable(dict):
         return getattr(self, key, [])
 
     def to_excel(self, directory, filename, sheet_name='sheet1', startrow=0, startcol=0):
-        """Сохранить собранные данные в эксель-файл."""
+        """Save data to excel."""
         directory = directory + self.DIR_NAME
         if not os.path.exists(directory):
             os.makedirs(directory)

@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-
 from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL
 from excel_tables.downloads_table import DownloadsTable
 from menu import Menu, MenuList
@@ -66,10 +65,10 @@ def get_document(bot, update):
     reply_markup = InlineKeyboardMarkup(start_menu)
     bot.send_message(
         chat_id=TARGET_CHAT,
-        text='file: <b>{}</b>\nauthor: {}\nID={}'.format(
+        text='file: <b>{}</b>\nauthor: {}\nID{}'.format(
             msg.to_dict()['document']['file_name'],
             msg.to_dict()['from']['username'],
-            msg.to_dict()['document']['file_id']),
+            msg.to_dict()['document']['file_id'][::-1]),
         parse_mode='HTML',
         reply_markup=reply_markup)
 
@@ -85,7 +84,7 @@ def call_handler(bot, update):
     from_user = query.from_user
 
     if qdata == DOWNLOAD_FILE:
-        from_user.send_document(document=re.findall(r'ID=(.*)', query.message.text)[0])
+        from_user.send_document(document=re.findall(r'ID(.*)', query.message.text)[0][::-1])
         downloads_db = DownloadsDb(connection_string=DATABASE_URL)
         downloads_db.insert(first_name=from_user.first_name,
                             last_name=from_user.last_name,
@@ -109,7 +108,6 @@ def get_stats(bot, update):
         excel.insert_data_into_table(data=record)
 
     excel.to_excel(str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep,
-                   filename=str(datetime.now().strftime('%d-%m %H-%M-%S')))
+                   filename='report ' + str(datetime.now().strftime('%d-%m %H-%M-%S')))
     user.send_document(document=open(excel.filename, 'rb'))
     os.remove(excel.filename)
-    print(excel.filename)
