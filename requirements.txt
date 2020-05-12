@@ -1,3 +1,4 @@
 python-telegram-bot==11.1.0
 psycopg2==2.7.7
-pytz
+openpyxl==3.0.0
+pandas==0.25.1

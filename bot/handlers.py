@@ -1,8 +1,10 @@
 import os
 from datetime import datetime
 from functools import wraps
-import pytz
+from pathlib import Path
+
 from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL
+from excel_tables.downloads_table import DownloadsTable
 from menu import Menu, MenuList
 from telegram import InlineKeyboardMarkup, Chat
 import re
@@ -39,6 +41,7 @@ def start(bot, update):
 
 
 @check_chat_type
+@restricted
 def reset(bot, update):
     bot.send_message(chat_id=update.effective_chat.id, text='Что-то пошло не так, ' + update.effective_user.username)
     start(bot=bot, update=update)
@@ -88,6 +91,24 @@ def call_handler(bot, update):
                             last_name=from_user.last_name,
                             username=from_user.username,
                             is_bot=from_user.is_bot,
-                            download_date=datetime.now(tz=pytz.timezone('Europe/Moscow')),
+                            download_date=datetime.now(),
                             filename='filename')
         downloads_db.close()
+
+
+@check_chat_type
+@restricted
+def get_stats(bot, update):
+    user = update.effective_user
+    excel = DownloadsTable()
+
+    downloads_db = DownloadsDb(connection_string=DATABASE_URL)
+    all_records = downloads_db.load_all()
+
+    for record in all_records:
+        excel.insert_data_into_table(data=record)
+
+    excel.to_excel(str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep,
+                   filename=str(datetime.now().strftime('%d-%m %H-%M-%S')))
+    user.send_document(document=open(excel.filename, 'rb'))
+    os.remove(excel.filename)
