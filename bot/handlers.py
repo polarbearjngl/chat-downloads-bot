@@ -66,8 +66,9 @@ def get_document(bot, update):
     reply_markup = InlineKeyboardMarkup(start_menu)
     bot.send_message(
         chat_id=TARGET_CHAT,
-        text='file: <b>{}</b>\nauthor: {}\nID{}'.format(
+        text='file: <b>{}</b>\nsize: {}\nauthor: {}\nID{}'.format(
             msg.to_dict()['document']['file_name'],
+            msg.to_dict()['document']['file_size'],
             msg.to_dict()['from']['username'],
             msg.to_dict()['document']['file_id'][::-1]),
         parse_mode='HTML',
@@ -78,10 +79,7 @@ def get_document(bot, update):
 
 def call_handler(bot, update):
     query = update.callback_query
-    query_id = update.callback_query.id
     qdata = query.data
-    message_id = query.message.message_id
-    chat_id = query.message.chat_id
     from_user = query.from_user
 
     if qdata == DOWNLOAD_FILE:
