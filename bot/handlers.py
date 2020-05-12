@@ -119,7 +119,7 @@ def call_handler(bot, update):
                     os.remove(excel.filename)
         downloads_db.close()
         ###
-        from_user.send_message(text=query.message.text)
+        from_user.send_message(text=re.findall(r'file: (.*\n)', query.message.text))
 
 
 @check_chat_type
