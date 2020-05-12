@@ -1,8 +1,7 @@
 import logging
 from telegram.ext import (Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackQueryHandler)
-from bot.common import GET_DOCUMENT, START, RESET, UPLOAD, GET_CHAT_ID, TOKEN, PORT, HEROKU_APP_NAME
-from bot.handlers import start, get_chat_id, upload, get_document, call_handler, reset
-
+from bot.common import GET_DOCUMENT, START, RESET, UPLOAD, GET_CHAT_ID, TOKEN, PORT, HEROKU_APP_NAME, GET_STATS
+from bot.handlers import start, get_chat_id, upload, get_document, call_handler, reset, get_stats
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -42,6 +41,9 @@ if __name__ == '__main__':
     dp.add_handler(conv_handler)
 
     updater.dispatcher.add_handler(CallbackQueryHandler(callback=call_handler))
+
+    get_stats_handler = CommandHandler(GET_STATS, get_stats)
+    dp.add_handler(get_stats_handler)
 
     # log all errors
     dp.add_error_handler(error)
