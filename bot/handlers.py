@@ -6,7 +6,7 @@ import pytz
 
 from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL
 from menu import Menu, MenuList
-from telegram import InlineKeyboardMarkup
+from telegram import InlineKeyboardMarkup, Chat
 import re
 from postgress.downloads_db import DownloadsDb
 
@@ -24,11 +24,23 @@ def restricted(func):
     return wrapped
 
 
+def check_chat_type(func):
+    @wraps(func)
+    def wrapped(bot, update, *args, **kwargs):
+        chat_type = update.effective_chat.type
+        if chat_type == Chat.PRIVATE:
+            return func(bot, update, *args, **kwargs)
+        update.message.reply_text(text='Можно выполнить только в личном чате с ботом.')
+    return wrapped
+
+
+@check_chat_type
 def start(bot, update):
     bot.send_message(chat_id=update.effective_chat.id, text='Приветствую тебя, ' + update.effective_user.username +
                                                             '. Напиши команду /upload чтобы начать загрузку.')
 
 
+@check_chat_type
 def reset(bot, update):
     bot.send_message(chat_id=update.effective_chat.id, text='Что-то пошло не так, ' + update.effective_user.username)
     start(bot=bot, update=update)
@@ -39,6 +51,7 @@ def get_chat_id(bot, update):
     bot.send_message(chat_id=update.effective_chat.id, text='This chat_id is ' + str(update.effective_chat.id))
 
 
+@check_chat_type
 @restricted
 def upload(bot, update):
     update.message.reply_text(text='Теперь ты можешь загрузить файл в сообщения боту.')
