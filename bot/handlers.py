@@ -93,7 +93,7 @@ def call_handler(bot, update):
                             username=from_user.username,
                             is_bot=from_user.is_bot,
                             download_date=datetime.now(),
-                            filename='filename')
+                            filename=re.findall(r'file: (.*\n)', query.message.text)[0])
 
         count_rows = downloads_db.count_rows()
         if count_rows > int(os.environ.get("MAX_DB_COUNT", "9000")):
@@ -118,8 +118,6 @@ def call_handler(bot, update):
                 finally:
                     os.remove(excel.filename)
         downloads_db.close()
-        ###
-        from_user.send_message(text=re.findall(r'file: (.*\n)', query.message.text))
 
 
 @check_chat_type
