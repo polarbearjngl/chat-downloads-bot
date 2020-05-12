@@ -24,6 +24,7 @@ def restricted(func):
 
 
 def check_chat_type(func):
+    """Check is chat PRIVATE."""
     @wraps(func)
     def wrapped(bot, update, *args, **kwargs):
         chat_type = update.effective_chat.type
@@ -85,6 +86,7 @@ def call_handler(bot, update):
 
     if qdata == DOWNLOAD_FILE:
         from_user.send_document(document=re.findall(r'ID(.*)', query.message.text)[0][::-1])
+
         downloads_db = DownloadsDb(connection_string=DATABASE_URL)
         downloads_db.insert(first_name=from_user.first_name,
                             last_name=from_user.last_name,
@@ -92,7 +94,32 @@ def call_handler(bot, update):
                             is_bot=from_user.is_bot,
                             download_date=datetime.now(),
                             filename='filename')
+
+        count_rows = downloads_db.count_rows()
+        if count_rows > int(os.environ.get("MAX_DB_COUNT", "9000")):
+            excel = DownloadsTable()
+            all_records = downloads_db.load_all()
+            for record in all_records:
+                excel.insert_data_into_table(data=record)
+
+            excel.to_excel(str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep,
+                           filename='report ' + str(datetime.now().strftime('%d-%m %H-%M-%S')))
+
+            for admin_id in map(int, os.environ.get("LIST_OF_ADMINS").split(',')):
+                try:
+                    bot.send_message(
+                        chat_id=admin_id,
+                        text='Количество записей в БД={count_rows}. Текущее состояние БД сохранено в отчет, '
+                             'который отправлен всем администраторам. БД очищена и будет заполняться заново'.format(
+                                count_rows=count_rows))
+                    bot.send_document(chat_id=admin_id, document=open(excel.filename, 'rb'))
+                except:
+                    pass
+                finally:
+                    os.remove(excel.filename)
         downloads_db.close()
+        ###
+        from_user.send_message(text=query.message.text)
 
 
 @check_chat_type
@@ -111,3 +138,4 @@ def get_stats(bot, update):
                    filename='report ' + str(datetime.now().strftime('%d-%m %H-%M-%S')))
     user.send_document(document=open(excel.filename, 'rb'))
     os.remove(excel.filename)
+    downloads_db.close()

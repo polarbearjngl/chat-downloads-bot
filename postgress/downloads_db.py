@@ -42,7 +42,7 @@ class DownloadsDb(PgClient):
                                                filename=filename)
 
     def count_rows(self):
-        sql_count_rows = """select COUNT(*) from downloads"""
+        sql_count_rows = """select COUNT(*) as count from downloads"""
         return self.execute_sql_statement_mapped(sql=sql_count_rows)[0]['count']
 
     def truncate(self):
