@@ -112,4 +112,4 @@ def get_stats(bot, update):
                    filename=str(datetime.now().strftime('%d-%m %H-%M-%S')))
     user.send_document(document=open(excel.filename, 'rb'))
     os.remove(excel.filename)
-    print("excel.filename.")
+    print(excel.filename)
