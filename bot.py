@@ -36,7 +36,8 @@ if __name__ == '__main__':
             GET_DOCUMENT: [MessageHandler(filters=Filters.document, callback=get_document)],
         },
 
-        fallbacks=[CommandHandler(RESET, reset)]
+        fallbacks=[CommandHandler(RESET, reset)],
+        allow_reentry=True
     )
     dp.add_handler(conv_handler)
 
