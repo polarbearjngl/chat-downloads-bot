@@ -2,7 +2,7 @@ import os
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
-from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL
+from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL, convert_size
 from excel_tables.downloads_table import DownloadsTable
 from menu import Menu, MenuList
 from telegram import InlineKeyboardMarkup, Chat
@@ -68,7 +68,7 @@ def get_document(bot, update):
         chat_id=TARGET_CHAT,
         text='file: <b>{}</b>\nsize: {}\nauthor: {}\nID{}'.format(
             msg.to_dict()['document']['file_name'],
-            msg.to_dict()['document']['file_size'],
+            convert_size(msg.to_dict()['document']['file_size']),
             msg.to_dict()['from']['username'],
             msg.to_dict()['document']['file_id'][::-1]),
         parse_mode='HTML',
@@ -103,18 +103,20 @@ def call_handler(bot, update):
             excel.to_excel(str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep,
                            filename='report ' + str(datetime.now().strftime('%d-%m %H-%M-%S')))
 
-            for admin_id in map(int, os.environ.get("LIST_OF_ADMINS").split(',')):
-                try:
+            try:
+                for admin_id in map(int, os.environ.get("LIST_OF_ADMINS").split(',')):
                     bot.send_message(
                         chat_id=admin_id,
                         text='Количество записей в БД={count_rows}. Текущее состояние БД сохранено в отчет, '
                              'который отправлен всем администраторам. БД очищена и будет заполняться заново'.format(
                                 count_rows=count_rows))
                     bot.send_document(chat_id=admin_id, document=open(excel.filename, 'rb'))
-                except:
-                    pass
-                finally:
-                    os.remove(excel.filename)
+            except:
+                pass
+            finally:
+                os.remove(excel.filename)
+                downloads_db.truncate()
+
         downloads_db.close()
 
 

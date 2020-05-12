@@ -1,3 +1,4 @@
+import math
 import os
 
 TOKEN = os.getenv("TOKEN")
@@ -14,3 +15,13 @@ UPLOAD = 'upload'
 GET_CHAT_ID = 'get_chat_id'
 DOWNLOAD_FILE = 'download_file'
 GET_STATS = 'get_stats'
+
+
+def convert_size(size_bytes):
+    if size_bytes == 0:
+        return "0B"
+    size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+    i = int(math.floor(math.log(size_bytes, 1024)))
+    p = math.pow(1024, i)
+    s = round(size_bytes / p, 2)
+    return "%s %s" % (s, size_name[i])
