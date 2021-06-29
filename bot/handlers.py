@@ -40,16 +40,19 @@ def check_chat_type(func):
 def check_downloads_counter(func):
     @wraps(func)
     def wrapped(bot, from_user, query, *args, **kwargs):
+        # FIXME uncomment!!!!!!!!!!!
+        # if from_user.id in map(int, os.environ.get("LIST_OF_ADMINS").split(',')):
+        #     return func(bot, from_user, query, *args, **kwargs)
+
         counter_db = CounterDb(connection_string=DATABASE_URL)
         current_counter = counter_db.get_counter(user_id=from_user.id)
-        bot.send_message(chat_id=from_user.id,
-                         text=f'{current_counter}')
+        # bot.send_message(chat_id=from_user.id, text=f'{current_counter}')
 
-        datetime_now = datetime.now().replace(microsecond=0)
+        datetime_now = datetime.now().replace(microsecond=0, second=0)
 
         if not current_counter:
-            bot.send_message(chat_id=from_user.id,
-                             text=f'create new rec')
+            # bot.send_message(chat_id=from_user.id,
+            #                  text=f'create new rec')
             counter_db.insert(user_id=from_user.id,
                               username=from_user.username,
                               is_bot=from_user.is_bot,
@@ -57,7 +60,7 @@ def check_downloads_counter(func):
                               next_counter_update_date=datetime_now + timedelta(minutes=COUNTER_DAYS_INTERVAL))
             return func(bot, from_user, query, *args, **kwargs)
 
-        next_counter_update_date = current_counter[0]["next_counter_update_date"].replace(microsecond=0)
+        next_counter_update_date = current_counter[0]["next_counter_update_date"].replace(microsecond=0, second=0)
         count_num = current_counter[0]["count_num"]
 
         if datetime_now >= next_counter_update_date:
@@ -84,9 +87,10 @@ def check_downloads_counter(func):
                 bot.send_message(chat_id=from_user.id,
                                  text=f'{count_num} >= {MAX_DOWNLOADS_COUNT}')
                 bot.send_message(chat_id=from_user.id,
-                                 text=f'Ты нажал(а) на кнопку "Скачать" {count_num} раз(а).\n'
-                                      f'Дальнейшее скачивание ограничено.\n'
-                                      f'Ограничение пропадет {next_counter_update_date} GMT')
+                                 text=f'Ты нажал(а) на кнопку "Скачать" <b>{count_num}</b> раз(а).\n'
+                                      f'Дальнейшее скачивание ограничено!\n'
+                                      f'Ограничение пропадет <b>{next_counter_update_date} GMT</b>.\n',
+                                 parse_mode='HTML')
                 return
 
     return wrapped
