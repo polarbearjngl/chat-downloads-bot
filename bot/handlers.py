@@ -42,10 +42,12 @@ def check_downloads_counter(func):
     def wrapped(bot, update, from_user, query, *args, **kwargs):
         counter_db = CounterDb(connection_string=DATABASE_URL)
         current_counter = counter_db.get_counter(user_id=from_user.id)
-        update.message.reply_text(text=f'{current_counter}')
+        bot.send_message(chat_id=from_user.id,
+                         text=f'{current_counter}')
 
         if not current_counter:
-            update.message.reply_text(text=f'create new rec')
+            bot.send_message(chat_id=from_user.id,
+                             text=f'create new rec')
             counter_db.insert(user_id=from_user.id,
                               username=from_user.username,
                               is_bot=from_user.is_bot,
@@ -53,26 +55,30 @@ def check_downloads_counter(func):
                               next_counter_update_date=datetime.now() + timedelta(minutes=COUNTER_DAYS_INTERVAL))
 
         if datetime.now() >= current_counter[0]["next_counter_update_date"]:
-            update.message.reply_text(text=f'{datetime.now()} >= {current_counter[0]["next_counter_update_date"]}')
+            bot.send_message(chat_id=from_user.id,
+                             text=f'{datetime.now()} >= {current_counter[0]["next_counter_update_date"]}')
             counter_db.update(user_id=from_user.id,
                               counter_update_date=datetime.now(),
                               next_counter_update_date=datetime.now() + timedelta(minutes=COUNTER_DAYS_INTERVAL),
                               count=1)
 
         if datetime.now() < current_counter[0]["next_counter_update_date"]:
-            update.message.reply_text(text=f'{datetime.now()} < {current_counter[0]["next_counter_update_date"]}')
+            bot.send_message(chat_id=from_user.id,
+                             text=f'{datetime.now()} < {current_counter[0]["next_counter_update_date"]}')
 
             if current_counter[0]["count_num"] < MAX_DOWNLOADS_COUNT:
-                update.message.reply_text(text=f'{current_counter[0]["count_num"]} < {MAX_DOWNLOADS_COUNT}')
+                bot.send_message(chat_id=from_user.id,
+                                 text=f'{current_counter[0]["count_num"]} < {MAX_DOWNLOADS_COUNT}')
                 counter_db.update(user_id=from_user.id,
                                   count=current_counter[0]["count_num"] + 1)
 
             if current_counter[0]["count"] >= MAX_DOWNLOADS_COUNT:
-                update.message.reply_text(text=f'{current_counter[0]["count_num"]} >= {MAX_DOWNLOADS_COUNT}')
-                update.message.reply_text(
-                    text=f'Ты нажал на кнопку "Скачать" {current_counter[0]["count_num"]} раз(а).'
-                         f'Дальнейшее скачивание ограничено. '
-                         f'Ограничение пропадет {current_counter[0]["next_counter_update_date"]}')
+                bot.send_message(chat_id=from_user.id,
+                                 text=f'{current_counter[0]["count_num"]} >= {MAX_DOWNLOADS_COUNT}')
+                bot.send_message(chat_id=from_user.id,
+                                 text=f'Ты нажал на кнопку "Скачать" {current_counter[0]["count_num"]} раз(а).'
+                                      f'Дальнейшее скачивание ограничено. '
+                                      f'Ограничение пропадет {current_counter[0]["next_counter_update_date"]}')
                 return
 
         return func(bot, update, from_user, query, *args, **kwargs)
