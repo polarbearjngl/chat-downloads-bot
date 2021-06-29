@@ -1,12 +1,15 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
-from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL, convert_size
+from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL, convert_size, COUNTER_DAYS_INTERVAL, \
+    MAX_DOWNLOADS_COUNT
 from excel_tables.downloads_table import DownloadsTable
 from menu import Menu, MenuList
 from telegram import InlineKeyboardMarkup, Chat
 import re
+
+from postgress.counter_db import CounterDb
 from postgress.downloads_db import DownloadsDb
 
 
@@ -31,6 +34,48 @@ def check_chat_type(func):
         if chat_type == Chat.PRIVATE:
             return func(bot, update, *args, **kwargs)
         update.message.reply_text(text='Можно выполнить только в личном чате с ботом.')
+    return wrapped
+
+
+def check_downloads_counter(func):
+    @wraps(func)
+    def wrapped(bot, update, from_user, query, *args, **kwargs):
+        counter_db = CounterDb(connection_string=DATABASE_URL)
+        current_counter = counter_db.get_counter(user_id=from_user.id)
+        update.message.reply_text(text=f'{current_counter}')
+
+        if not current_counter:
+            update.message.reply_text(text=f'create new rec')
+            counter_db.insert(user_id=from_user.id,
+                              username=from_user.username,
+                              is_bot=from_user.is_bot,
+                              counter_update_date=datetime.now(),
+                              next_counter_update_date=datetime.now() + timedelta(minutes=COUNTER_DAYS_INTERVAL))
+
+        if datetime.now() >= current_counter[0]["next_counter_update_date"]:
+            update.message.reply_text(text=f'{datetime.now()} >= {current_counter[0]["next_counter_update_date"]}')
+            counter_db.update(user_id=from_user.id,
+                              counter_update_date=datetime.now(),
+                              next_counter_update_date=datetime.now() + timedelta(minutes=COUNTER_DAYS_INTERVAL),
+                              count=1)
+
+        if datetime.now() < current_counter[0]["next_counter_update_date"]:
+            update.message.reply_text(text=f'{datetime.now()} < {current_counter[0]["next_counter_update_date"]}')
+
+            if current_counter[0]["count"] < MAX_DOWNLOADS_COUNT:
+                update.message.reply_text(text=f'{current_counter[0]["count"]} < {MAX_DOWNLOADS_COUNT}')
+                counter_db.update(user_id=from_user.id,
+                                  count=current_counter[0]["count"] + 1)
+
+            if current_counter[0]["count"] >= MAX_DOWNLOADS_COUNT:
+                update.message.reply_text(text=f'{current_counter[0]["count"]} >= {MAX_DOWNLOADS_COUNT}')
+                update.message.reply_text(
+                    text=f'Ты нажал на кнопку "Скачать" {current_counter[0]["count"]} раз(а).'
+                         f'Дальнейшее скачивание ограничено. '
+                         f'Ограничение пропадет {current_counter[0]["next_counter_update_date"]}')
+                return
+
+        return func(bot, update, from_user, query, *args, **kwargs)
     return wrapped
 
 
@@ -83,41 +128,46 @@ def call_handler(bot, update):
     from_user = query.from_user
 
     if qdata == DOWNLOAD_FILE:
-        from_user.send_document(document=re.findall(r'ID(.*)', query.message.text)[0][::-1])
+        send_document_to_user(bot, update, from_user, query)
 
-        downloads_db = DownloadsDb(connection_string=DATABASE_URL)
-        downloads_db.insert(first_name=from_user.first_name,
-                            last_name=from_user.last_name,
-                            username=from_user.username,
-                            is_bot=from_user.is_bot,
-                            download_date=datetime.now(),
-                            filename=re.findall(r'file: (.*\n)', query.message.text)[0])
 
-        count_rows = downloads_db.count_rows()
-        if count_rows > int(os.environ.get("MAX_DB_COUNT", "9000")):
-            excel = DownloadsTable()
-            all_records = downloads_db.load_all()
-            for record in all_records:
-                excel.insert_data_into_table(data=record)
+@check_downloads_counter
+def send_document_to_user(bot, update, from_user, query):
+    from_user.send_document(document=re.findall(r'ID(.*)', query.message.text)[0][::-1])
 
-            excel.to_excel(str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep,
-                           filename='report ' + str(datetime.now().strftime('%d-%m %H-%M-%S')))
+    downloads_db = DownloadsDb(connection_string=DATABASE_URL)
+    downloads_db.insert(first_name=from_user.first_name,
+                        last_name=from_user.last_name,
+                        username=from_user.username,
+                        is_bot=from_user.is_bot,
+                        download_date=datetime.now(),
+                        filename=re.findall(r'file: (.*\n)', query.message.text)[0])
 
-            try:
-                for admin_id in map(int, os.environ.get("LIST_OF_ADMINS").split(',')):
-                    bot.send_message(
-                        chat_id=admin_id,
-                        text='Количество записей в БД={count_rows}. Текущее состояние БД сохранено в отчет, '
-                             'который отправлен всем администраторам. БД очищена и будет заполняться заново'.format(
-                                count_rows=count_rows))
-                    bot.send_document(chat_id=admin_id, document=open(excel.filename, 'rb'))
-            except:
-                pass
-            finally:
-                os.remove(excel.filename)
-                downloads_db.truncate()
+    count_rows = downloads_db.count_rows()
+    if count_rows > int(os.environ.get("MAX_DB_COUNT", "9000")):
+        excel = DownloadsTable()
+        all_records = downloads_db.load_all()
+        for record in all_records:
+            excel.insert_data_into_table(data=record)
 
-        downloads_db.close()
+        excel.to_excel(str(Path(__file__).parent.parent.absolute()) + os.sep + 'reports' + os.sep,
+                       filename='report ' + str(datetime.now().strftime('%d-%m %H-%M-%S')))
+
+        try:
+            for admin_id in map(int, os.environ.get("LIST_OF_ADMINS").split(',')):
+                bot.send_message(
+                    chat_id=admin_id,
+                    text='Количество записей в БД={count_rows}. Текущее состояние БД сохранено в отчет, '
+                         'который отправлен всем администраторам. БД очищена и будет заполняться заново'.format(
+                        count_rows=count_rows))
+                bot.send_document(chat_id=admin_id, document=open(excel.filename, 'rb'))
+        except:
+            pass
+        finally:
+            os.remove(excel.filename)
+            downloads_db.truncate()
+
+    downloads_db.close()
 
 
 @check_chat_type
