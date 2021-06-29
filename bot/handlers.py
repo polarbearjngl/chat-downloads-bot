@@ -75,7 +75,7 @@ def check_downloads_counter(func):
                                   count=current_counter[0]["count_num"] + 1)
                 return func(bot, update, from_user, query, *args, **kwargs)
 
-            if current_counter[0]["count"] >= MAX_DOWNLOADS_COUNT:
+            if current_counter[0]["count_num"] >= MAX_DOWNLOADS_COUNT:
                 bot.send_message(chat_id=from_user.id,
                                  text=f'{current_counter[0]["count_num"]} >= {MAX_DOWNLOADS_COUNT}')
                 bot.send_message(chat_id=from_user.id,
