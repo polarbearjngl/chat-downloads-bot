@@ -39,11 +39,13 @@ def check_chat_type(func):
 
 def check_downloads_counter(func):
     @wraps(func)
-    def wrapped(bot, update, from_user, query, *args, **kwargs):
+    def wrapped(bot, from_user, query, *args, **kwargs):
         counter_db = CounterDb(connection_string=DATABASE_URL)
         current_counter = counter_db.get_counter(user_id=from_user.id)
         bot.send_message(chat_id=from_user.id,
                          text=f'{current_counter}')
+
+        datetime_now = datetime.now().replace(microsecond=0)
 
         if not current_counter:
             bot.send_message(chat_id=from_user.id,
@@ -51,37 +53,40 @@ def check_downloads_counter(func):
             counter_db.insert(user_id=from_user.id,
                               username=from_user.username,
                               is_bot=from_user.is_bot,
-                              counter_update_date=datetime.now(),
-                              next_counter_update_date=datetime.now() + timedelta(minutes=COUNTER_DAYS_INTERVAL))
-            return func(bot, update, from_user, query, *args, **kwargs)
+                              counter_update_date=datetime_now,
+                              next_counter_update_date=datetime_now + timedelta(minutes=COUNTER_DAYS_INTERVAL))
+            return func(bot, from_user, query, *args, **kwargs)
 
-        if datetime.now() >= current_counter[0]["next_counter_update_date"]:
+        next_counter_update_date = current_counter[0]["next_counter_update_date"].replace(microsecond=0)
+        count_num = current_counter[0]["count_num"]
+
+        if datetime_now >= next_counter_update_date:
             bot.send_message(chat_id=from_user.id,
-                             text=f'{datetime.now()} >= {current_counter[0]["next_counter_update_date"]}')
+                             text=f'{datetime_now} >= {next_counter_update_date}')
             counter_db.update(user_id=from_user.id,
-                              counter_update_date=datetime.now(),
-                              next_counter_update_date=datetime.now() + timedelta(minutes=COUNTER_DAYS_INTERVAL),
+                              counter_update_date=datetime_now,
+                              next_counter_update_date=datetime_now + timedelta(minutes=COUNTER_DAYS_INTERVAL),
                               count=1)
-            return func(bot, update, from_user, query, *args, **kwargs)
+            return func(bot, from_user, query, *args, **kwargs)
 
-        if datetime.now() < current_counter[0]["next_counter_update_date"]:
+        if datetime_now < next_counter_update_date:
             bot.send_message(chat_id=from_user.id,
-                             text=f'{datetime.now()} < {current_counter[0]["next_counter_update_date"]}')
+                             text=f'{datetime_now} < {next_counter_update_date}')
 
-            if current_counter[0]["count_num"] < MAX_DOWNLOADS_COUNT:
+            if count_num < MAX_DOWNLOADS_COUNT:
                 bot.send_message(chat_id=from_user.id,
-                                 text=f'{current_counter[0]["count_num"]} < {MAX_DOWNLOADS_COUNT}')
+                                 text=f'{count_num} < {MAX_DOWNLOADS_COUNT}')
                 counter_db.update(user_id=from_user.id,
-                                  count=current_counter[0]["count_num"] + 1)
-                return func(bot, update, from_user, query, *args, **kwargs)
+                                  count=count_num + 1)
+                return func(bot, from_user, query, *args, **kwargs)
 
-            if current_counter[0]["count_num"] >= MAX_DOWNLOADS_COUNT:
+            if count_num >= MAX_DOWNLOADS_COUNT:
                 bot.send_message(chat_id=from_user.id,
-                                 text=f'{current_counter[0]["count_num"]} >= {MAX_DOWNLOADS_COUNT}')
+                                 text=f'{count_num} >= {MAX_DOWNLOADS_COUNT}')
                 bot.send_message(chat_id=from_user.id,
-                                 text=f'Ты нажал на кнопку "Скачать" {current_counter[0]["count_num"]} раз(а).'
-                                      f'Дальнейшее скачивание ограничено. '
-                                      f'Ограничение пропадет {current_counter[0]["next_counter_update_date"]}')
+                                 text=f'Ты нажал(а) на кнопку "Скачать" {count_num} раз(а).\n'
+                                      f'Дальнейшее скачивание ограничено.\n'
+                                      f'Ограничение пропадет {next_counter_update_date} GMT')
                 return
 
     return wrapped
@@ -136,14 +141,15 @@ def call_handler(bot, update):
     from_user = query.from_user
 
     if qdata == DOWNLOAD_FILE:
-        send_document_to_user(bot, update, from_user, query)
+        send_document_to_user(bot, from_user, query)
 
 
 @check_downloads_counter
-def send_document_to_user(bot, update, from_user, query):
+def send_document_to_user(bot, from_user, query):
     from_user.send_document(document=re.findall(r'ID(.*)', query.message.text)[0][::-1])
 
     downloads_db = DownloadsDb(connection_string=DATABASE_URL)
+    counter_db = CounterDb(connection_string=DATABASE_URL)
     downloads_db.insert(first_name=from_user.first_name,
                         last_name=from_user.last_name,
                         username=from_user.username,
@@ -151,7 +157,7 @@ def send_document_to_user(bot, update, from_user, query):
                         download_date=datetime.now(),
                         filename=re.findall(r'file: (.*\n)', query.message.text)[0])
 
-    count_rows = downloads_db.count_rows()
+    count_rows = downloads_db.count_rows() + counter_db.count_rows()
     if count_rows > int(os.environ.get("MAX_DB_COUNT", "9000")):
         excel = DownloadsTable()
         all_records = downloads_db.load_all()
