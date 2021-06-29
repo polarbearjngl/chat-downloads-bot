@@ -53,6 +53,7 @@ def check_downloads_counter(func):
                               is_bot=from_user.is_bot,
                               counter_update_date=datetime.now(),
                               next_counter_update_date=datetime.now() + timedelta(minutes=COUNTER_DAYS_INTERVAL))
+            return func(bot, update, from_user, query, *args, **kwargs)
 
         if datetime.now() >= current_counter[0]["next_counter_update_date"]:
             bot.send_message(chat_id=from_user.id,
@@ -61,6 +62,7 @@ def check_downloads_counter(func):
                               counter_update_date=datetime.now(),
                               next_counter_update_date=datetime.now() + timedelta(minutes=COUNTER_DAYS_INTERVAL),
                               count=1)
+            return func(bot, update, from_user, query, *args, **kwargs)
 
         if datetime.now() < current_counter[0]["next_counter_update_date"]:
             bot.send_message(chat_id=from_user.id,
@@ -71,6 +73,7 @@ def check_downloads_counter(func):
                                  text=f'{current_counter[0]["count_num"]} < {MAX_DOWNLOADS_COUNT}')
                 counter_db.update(user_id=from_user.id,
                                   count=current_counter[0]["count_num"] + 1)
+                return func(bot, update, from_user, query, *args, **kwargs)
 
             if current_counter[0]["count"] >= MAX_DOWNLOADS_COUNT:
                 bot.send_message(chat_id=from_user.id,
@@ -81,7 +84,6 @@ def check_downloads_counter(func):
                                       f'Ограничение пропадет {current_counter[0]["next_counter_update_date"]}')
                 return
 
-        return func(bot, update, from_user, query, *args, **kwargs)
     return wrapped
 
 

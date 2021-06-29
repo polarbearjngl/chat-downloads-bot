@@ -23,7 +23,7 @@ class CounterDb(PgClient):
         sql_insert = """UPDATE counter
                            SET counter_update_date = COALESCE(:counter_update_date, counter_update_date),
                                next_counter_update_date = COALESCE(:next_counter_update_date, next_counter_update_date),
-                               count_num = :count
+                               count_num = :count_num
                          WHERE user_id = :user_id"""
         self.execute_sql_statement_with_commit(sql=sql_insert,
                                                user_id=user_id,
