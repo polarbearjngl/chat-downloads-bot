@@ -62,15 +62,15 @@ def check_downloads_counter(func):
         if datetime.now() < current_counter[0]["next_counter_update_date"]:
             update.message.reply_text(text=f'{datetime.now()} < {current_counter[0]["next_counter_update_date"]}')
 
-            if current_counter[0]["count"] < MAX_DOWNLOADS_COUNT:
-                update.message.reply_text(text=f'{current_counter[0]["count"]} < {MAX_DOWNLOADS_COUNT}')
+            if current_counter[0]["count_num"] < MAX_DOWNLOADS_COUNT:
+                update.message.reply_text(text=f'{current_counter[0]["count_num"]} < {MAX_DOWNLOADS_COUNT}')
                 counter_db.update(user_id=from_user.id,
-                                  count=current_counter[0]["count"] + 1)
+                                  count=current_counter[0]["count_num"] + 1)
 
             if current_counter[0]["count"] >= MAX_DOWNLOADS_COUNT:
-                update.message.reply_text(text=f'{current_counter[0]["count"]} >= {MAX_DOWNLOADS_COUNT}')
+                update.message.reply_text(text=f'{current_counter[0]["count_num"]} >= {MAX_DOWNLOADS_COUNT}')
                 update.message.reply_text(
-                    text=f'Ты нажал на кнопку "Скачать" {current_counter[0]["count"]} раз(а).'
+                    text=f'Ты нажал на кнопку "Скачать" {current_counter[0]["count_num"]} раз(а).'
                          f'Дальнейшее скачивание ограничено. '
                          f'Ограничение пропадет {current_counter[0]["next_counter_update_date"]}')
                 return

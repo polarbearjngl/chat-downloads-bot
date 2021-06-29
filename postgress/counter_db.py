@@ -13,7 +13,7 @@ class CounterDb(PgClient):
                                     is_bot,
                                     counter_update_date,
                                     next_counter_update_date,
-                                    count
+                                    count_num
                              FROM   counter
                              WHERE  user_id = :user_id"""
         return self.execute_sql_statement_mapped(sql=sql_get_counter,
@@ -23,13 +23,13 @@ class CounterDb(PgClient):
         sql_insert = """UPDATE counter
                            SET counter_update_date = COALESCE(:counter_update_date, counter_update_date),
                                next_counter_update_date = COALESCE(:next_counter_update_date, next_counter_update_date),
-                               count = :count
+                               count_num = :count
                          WHERE user_id = :user_id"""
         self.execute_sql_statement_with_commit(sql=sql_insert,
                                                user_id=user_id,
                                                counter_update_date=counter_update_date,
                                                next_counter_update_date=next_counter_update_date,
-                                               count=count)
+                                               count_num=count)
 
     def insert(self, user_id, username, is_bot, counter_update_date, next_counter_update_date):
         sql_insert = """INSERT INTO counter
@@ -39,7 +39,7 @@ class CounterDb(PgClient):
                                      is_bot,
                                      counter_update_date,
                                      next_counter_update_date,
-                                     count)
+                                     count_num)
                         VALUES      (DEFAULT,
                                      :user_id,
                                      :username,
