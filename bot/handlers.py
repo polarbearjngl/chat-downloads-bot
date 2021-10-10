@@ -247,7 +247,23 @@ def abort_parsing(bot, from_user, query):
 
 
 def proceed_parsing(bot, from_user, query, user_data):
-    bot.send_message(chat_id=from_user.id, text=f'Here would be an export actions {len(user_data["dictionary"])}')
+    bot.send_message(chat_id=from_user.id,
+                     text=f'Here would be an export actions for {len(user_data["dictionary"])} msgs')
+
+    for message in user_data["dictionary"][:5]:
+        start_menu = Menu(buttons=MenuList.DOWNLOAD_BTN, col_num=1).build_menu()
+        reply_markup = InlineKeyboardMarkup(start_menu)
+        text = build_download_message(file_name=message["name"],
+                                      file_size=message.get("size", "NaN"),
+                                      file_id=message["id"])
+        bot.send_message(chat_id=TARGET_CHAT_FOR_EXPORT,
+                         text=text,
+                         parse_mode='HTML',
+                         reply_markup=reply_markup)
+
+    bot.send_message(chat_id=from_user.id,
+                     text=f'{len(user_data["dictionary"])} msgs exported')
+
     bot.delete_message(chat_id=from_user.id, message_id=query.message.message_id)
 
 # endregion
