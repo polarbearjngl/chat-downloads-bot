@@ -1,9 +1,9 @@
 import logging
 from telegram.ext import (Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, CallbackQueryHandler)
 from bot.common import GET_DOCUMENT, START, RESET, UPLOAD, GET_CHAT_ID, TOKEN, PORT, HEROKU_APP_NAME, GET_STATS, \
-    START_MSGS_IMPORT, PARSE_MSGS_HISTORY
+    START_MSGS_IMPORT, PARSE_MSGS_HISTORY, ABORT_PARSING, PROCEED_PARSING
 from bot.handlers import start, get_chat_id, upload, get_document, call_handler, reset, get_stats, start_msgs_import, \
-    parse_msgs_history
+    parse_msgs_history, abort_parsing, proceed_parsing
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -47,6 +47,10 @@ if __name__ == '__main__':
 
         states={
             PARSE_MSGS_HISTORY: [MessageHandler(filters=Filters.document, callback=parse_msgs_history)],
+
+            ABORT_PARSING: [CallbackQueryHandler(callback=abort_parsing)],
+
+            PROCEED_PARSING: [CallbackQueryHandler(callback=proceed_parsing)],
         },
 
         fallbacks=[CommandHandler(RESET, reset)],
@@ -54,7 +58,7 @@ if __name__ == '__main__':
     )
     dp.add_handler(conv_handler_2)
 
-    updater.dispatcher.add_handler(CallbackQueryHandler(callback=call_handler))
+    dp.add_handler(CallbackQueryHandler(callback=call_handler))
 
     get_stats_handler = CommandHandler(GET_STATS, get_stats)
     dp.add_handler(get_stats_handler)

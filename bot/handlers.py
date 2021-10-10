@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
 from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL, convert_size, COUNTER_DAYS_INTERVAL, \
-    MAX_DOWNLOADS_COUNT, PARSE_MSGS_HISTORY
+    MAX_DOWNLOADS_COUNT, PARSE_MSGS_HISTORY, build_download_message, TARGET_CHAT_FOR_EXPORT
 from excel_tables.downloads_table import DownloadsTable
 from menu import Menu, MenuList
 from telegram import InlineKeyboardMarkup, Chat
@@ -41,9 +41,8 @@ def check_chat_type(func):
 def check_downloads_counter(func):
     @wraps(func)
     def wrapped(bot, from_user, query, *args, **kwargs):
-        # FIXME uncomment!!!!!!!!!!!
-        # if from_user.id in map(int, os.environ.get("LIST_OF_ADMINS").split(',')):
-        #     return func(bot, from_user, query, *args, **kwargs)
+        if from_user.id in map(int, os.environ.get("LIST_OF_ADMINS").split(',')):
+            return func(bot, from_user, query, *args, **kwargs)
 
         counter_db = CounterDb(connection_string=DATABASE_URL)
         current_counter = counter_db.get_counter(user_id=from_user.id)
@@ -65,8 +64,8 @@ def check_downloads_counter(func):
         count_num = current_counter[0]["count_num"]
 
         if datetime_now >= next_counter_update_date:
-            bot.send_message(chat_id=from_user.id,
-                             text=f'{datetime_now} >= {next_counter_update_date}')
+            # bot.send_message(chat_id=from_user.id,
+            #                  text=f'{datetime_now} >= {next_counter_update_date}')
             counter_db.update(user_id=from_user.id,
                               counter_update_date=datetime_now,
                               next_counter_update_date=datetime_now + timedelta(minutes=COUNTER_DAYS_INTERVAL),
@@ -74,19 +73,19 @@ def check_downloads_counter(func):
             return func(bot, from_user, query, *args, **kwargs)
 
         if datetime_now < next_counter_update_date:
-            bot.send_message(chat_id=from_user.id,
-                             text=f'{datetime_now} < {next_counter_update_date}')
+            # bot.send_message(chat_id=from_user.id,
+            #                  text=f'{datetime_now} < {next_counter_update_date}')
 
             if count_num < MAX_DOWNLOADS_COUNT:
-                bot.send_message(chat_id=from_user.id,
-                                 text=f'{count_num} < {MAX_DOWNLOADS_COUNT}')
+                # bot.send_message(chat_id=from_user.id,
+                #                  text=f'{count_num} < {MAX_DOWNLOADS_COUNT}')
                 counter_db.update(user_id=from_user.id,
                                   count=count_num + 1)
                 return func(bot, from_user, query, *args, **kwargs)
 
             if count_num >= MAX_DOWNLOADS_COUNT:
-                bot.send_message(chat_id=from_user.id,
-                                 text=f'{count_num} >= {MAX_DOWNLOADS_COUNT}')
+                # bot.send_message(chat_id=from_user.id,
+                #                  text=f'{count_num} >= {MAX_DOWNLOADS_COUNT}')
                 bot.send_message(chat_id=from_user.id,
                                  text=f'Ты нажал(а) на кнопку "Скачать" <b>{count_num}</b> раз(а).\n'
                                       f'Дальнейшее скачивание ограничено!\n'
@@ -127,15 +126,13 @@ def get_document(bot, update):
 
     start_menu = Menu(buttons=MenuList.DOWNLOAD_BTN, col_num=1).build_menu()
     reply_markup = InlineKeyboardMarkup(start_menu)
-    bot.send_message(
-        chat_id=TARGET_CHAT,
-        text='file: <b>{}</b>\nsize: {}\nauthor: {}\nID{}'.format(
-            msg.to_dict()['document']['file_name'],
-            convert_size(msg.to_dict()['document']['file_size']),
-            msg.to_dict()['from']['username'],
-            msg.to_dict()['document']['file_id'][::-1]),
-        parse_mode='HTML',
-        reply_markup=reply_markup)
+    text = build_download_message(file_name=msg.to_dict()['document']['file_name'],
+                                  file_size=convert_size(msg.to_dict()['document']['file_size']),
+                                  file_id=msg.to_dict()['document']['file_id'][::-1])
+    bot.send_message(chat_id=TARGET_CHAT,
+                     text=text,
+                     parse_mode='HTML',
+                     reply_markup=reply_markup)
 
     start(bot=bot, update=update)
 
@@ -208,14 +205,17 @@ def get_stats(bot, update):
     downloads_db.close()
 
 
+# region IMPORT MSGS
 @check_chat_type
 @restricted
 def start_msgs_import(bot, update):
-    bot.send_message(chat_id=update.effective_chat.id, text='Now will be started a msgs export. Upload JSON with history')
+    bot.send_message(chat_id=update.effective_chat.id,
+                     text='Now will be started messages export. Upload JSON with history data')
     return PARSE_MSGS_HISTORY
 
 
 def parse_msgs_history(bot, update):
+    user = update.effective_user
     msg = update.effective_message
 
     file_obj = msg.document.get_file()
@@ -223,5 +223,25 @@ def parse_msgs_history(bot, update):
     file_data = Path(filename)
     with file_data.open() as f:
         dictionary = json.loads(f.read())
-        bot.send_message(chat_id=TARGET_CHAT,
-                         text=len(dictionary["messages"]))
+
+    parse_menu = Menu(buttons=MenuList.PARSING_BTN, col_num=2).build_menu()
+    reply_markup = InlineKeyboardMarkup(parse_menu)
+    user.send_message(
+        text=f"WARNING!!! DANGER ZONE!!!"
+             f" {len(dictionary['messages'])} will be exported to target chat {TARGET_CHAT_FOR_EXPORT}",
+        reply_markup=reply_markup)
+
+
+@check_chat_type
+@restricted
+def abort_parsing(bot, update):
+    bot.send_message(chat_id=update.effective_chat.id, text='Export was aborted')
+    start(bot=bot, update=update)
+
+
+@check_chat_type
+@restricted
+def proceed_parsing(bot, update):
+    bot.send_message(chat_id=update.effective_chat.id, text='Here would be an export actions')
+
+# endregion
