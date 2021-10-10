@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
 from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL, convert_size, COUNTER_DAYS_INTERVAL, \
-    MAX_DOWNLOADS_COUNT, PARSE_MSGS_HISTORY, build_download_message, TARGET_CHAT_FOR_EXPORT
+    MAX_DOWNLOADS_COUNT, PARSE_MSGS_HISTORY, build_download_message, TARGET_CHAT_FOR_EXPORT, ABORT_PARSING, \
+    PROCEED_PARSING
 from excel_tables.downloads_table import DownloadsTable
 from menu import Menu, MenuList
 from telegram import InlineKeyboardMarkup, Chat
@@ -145,6 +146,12 @@ def call_handler(bot, update):
     if qdata == DOWNLOAD_FILE:
         send_document_to_user(bot, from_user, query)
 
+    if qdata == ABORT_PARSING:
+        abort_parsing(bot, from_user, query)
+
+    if qdata == PROCEED_PARSING:
+        proceed_parsing(bot, from_user, query)
+
 
 @check_downloads_counter
 def send_document_to_user(bot, from_user, query):
@@ -234,14 +241,14 @@ def parse_msgs_history(bot, update):
 
 @check_chat_type
 @restricted
-def abort_parsing(bot, update):
-    bot.send_message(chat_id=update.effective_chat.id, text='Export was aborted')
-    start(bot=bot, update=update)
+def abort_parsing(bot, from_user, query):
+    bot.send_message(chat_id=from_user.effective_chat.id, text='Export was aborted')
+    start(bot=bot, update=from_user)
 
 
 @check_chat_type
 @restricted
-def proceed_parsing(bot, update):
-    bot.send_message(chat_id=update.effective_chat.id, text='Here would be an export actions')
+def proceed_parsing(bot, from_user, query):
+    bot.send_message(chat_id=from_user.effective_chat.id, text='Here would be an export actions')
 
 # endregion
