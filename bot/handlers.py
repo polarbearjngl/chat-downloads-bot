@@ -239,15 +239,11 @@ def parse_msgs_history(bot, update):
         reply_markup=reply_markup)
 
 
-@check_chat_type
-@restricted
 def abort_parsing(bot, from_user, query):
     bot.send_message(chat_id=from_user.id, text='Export was aborted')
     start(bot=bot, update=from_user)
 
 
-@check_chat_type
-@restricted
 def proceed_parsing(bot, from_user, query):
     bot.send_message(chat_id=from_user.id, text='Here would be an export actions')
 
