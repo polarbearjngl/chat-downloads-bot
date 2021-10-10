@@ -257,7 +257,7 @@ def proceed_parsing(bot, from_user, query, user_data):
     msgs_count = len(user_data["dictionary"])
     bot.send_message(
         chat_id=from_user.id,
-        text=f'Now export will be started. It took ~{(msgs_count * wait_time) / 60} minutes for {msgs_count} messages')
+        text=f'Now export will be started. It took ~{round((msgs_count * wait_time) / 60)} minutes for {msgs_count} messages')
     bot.delete_message(chat_id=from_user.id, message_id=query.message.message_id)
 
     for message in user_data["dictionary"]:
