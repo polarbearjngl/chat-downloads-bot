@@ -230,6 +230,7 @@ def parse_msgs_history(bot, update, user_data):
     file_data = Path(filename)
     with file_data.open() as f:
         dictionary = json.loads(f.read())
+    file_data.unlink()
 
     user_data['dictionary'] = dictionary
     parse_menu = Menu(buttons=MenuList.PARSING_BTN, col_num=2).build_menu()

@@ -46,7 +46,7 @@ if __name__ == '__main__':
         entry_points=[CommandHandler(START_MSGS_IMPORT, start_msgs_import)],
 
         states={
-            PARSE_MSGS_HISTORY: [MessageHandler(filters=Filters.document, callback=parse_msgs_history)],
+            PARSE_MSGS_HISTORY: [MessageHandler(filters=Filters.document, callback=parse_msgs_history, pass_user_data=True)],
         },
 
         fallbacks=[CommandHandler(RESET, reset)],
