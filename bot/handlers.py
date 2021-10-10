@@ -138,7 +138,7 @@ def get_document(bot, update):
     start(bot=bot, update=update)
 
 
-def call_handler(bot, update):
+def call_handler(bot, update, user_data):
     query = update.callback_query
     qdata = query.data
     from_user = query.from_user
@@ -150,7 +150,7 @@ def call_handler(bot, update):
         abort_parsing(bot, from_user, query)
 
     if qdata == PROCEED_PARSING:
-        proceed_parsing(bot, from_user, query)
+        proceed_parsing(bot, from_user, query, user_data)
 
 
 @check_downloads_counter
@@ -221,7 +221,7 @@ def start_msgs_import(bot, update):
     return PARSE_MSGS_HISTORY
 
 
-def parse_msgs_history(bot, update):
+def parse_msgs_history(bot, update, user_data):
     user = update.effective_user
     msg = update.effective_message
 
@@ -231,6 +231,7 @@ def parse_msgs_history(bot, update):
     with file_data.open() as f:
         dictionary = json.loads(f.read())
 
+    user_data['dictionary'] = dictionary
     parse_menu = Menu(buttons=MenuList.PARSING_BTN, col_num=2).build_menu()
     reply_markup = InlineKeyboardMarkup(parse_menu)
     user.send_message(
@@ -240,11 +241,12 @@ def parse_msgs_history(bot, update):
 
 
 def abort_parsing(bot, from_user, query):
+    bot.delete_message(chat_id=from_user.id, message_id=query.message.message_id)
     bot.send_message(chat_id=from_user.id, text='Export was aborted')
-    start(bot=bot, update=from_user)
 
 
-def proceed_parsing(bot, from_user, query):
-    bot.send_message(chat_id=from_user.id, text='Here would be an export actions')
+def proceed_parsing(bot, from_user, query, user_data):
+    bot.send_message(chat_id=from_user.id, text=f'Here would be an export actions {len(user_data["dictionary"])}')
+    bot.delete_message(chat_id=from_user.id, message_id=query.message.message_id)
 
 # endregion

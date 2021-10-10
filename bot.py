@@ -54,7 +54,7 @@ if __name__ == '__main__':
     )
     dp.add_handler(conv_handler_2)
 
-    dp.add_handler(CallbackQueryHandler(callback=call_handler))
+    dp.add_handler(CallbackQueryHandler(callback=call_handler, pass_user_data=True))
 
     get_stats_handler = CommandHandler(GET_STATS, get_stats)
     dp.add_handler(get_stats_handler)
