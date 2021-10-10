@@ -3,6 +3,8 @@ import os
 from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
+from time import sleep
+
 from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL, convert_size, COUNTER_DAYS_INTERVAL, \
     MAX_DOWNLOADS_COUNT, PARSE_MSGS_HISTORY, build_download_message, TARGET_CHAT_FOR_EXPORT, ABORT_PARSING, \
     PROCEED_PARSING
@@ -250,7 +252,7 @@ def proceed_parsing(bot, from_user, query, user_data):
     bot.send_message(chat_id=from_user.id,
                      text=f'Here would be an export actions for {len(user_data["dictionary"])} msgs')
 
-    for message in user_data["dictionary"][:5]:
+    for message in user_data["dictionary"]:
         start_menu = Menu(buttons=MenuList.DOWNLOAD_BTN, col_num=1).build_menu()
         reply_markup = InlineKeyboardMarkup(start_menu)
         text = build_download_message(file_name=message["name"],
@@ -260,6 +262,7 @@ def proceed_parsing(bot, from_user, query, user_data):
                          text=text,
                          parse_mode='HTML',
                          reply_markup=reply_markup)
+        sleep(3.5)
 
     bot.send_message(chat_id=from_user.id,
                      text=f'{len(user_data["dictionary"])} msgs exported')
