@@ -9,7 +9,7 @@ TARGET_CHAT = int(os.environ.get("TARGET_CHATS"))
 DATABASE_URL = os.getenv("DATABASE_URL")
 COUNTER_DAYS_INTERVAL = int(os.getenv("COUNTER_DAYS_INTERVAL"))
 MAX_DOWNLOADS_COUNT = int(os.getenv("MAX_DOWNLOADS_COUNT"))
-TARGET_CHAT_FOR_EXPORT = int(os.environ.get("TARGET_CHAT_FOR_EXPORT"))
+TARGET_CHAT_FOR_EXPORT = int(os.environ.get("TARGET_CHAT_FOR_EXPORT")) if os.environ.get("TARGET_CHAT_FOR_EXPORT") else False
 
 GET_DOCUMENT = range(1)
 START = 'start'

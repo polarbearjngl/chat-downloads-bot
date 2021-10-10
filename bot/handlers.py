@@ -89,11 +89,12 @@ def check_downloads_counter(func):
             if count_num >= MAX_DOWNLOADS_COUNT:
                 # bot.send_message(chat_id=from_user.id,
                 #                  text=f'{count_num} >= {MAX_DOWNLOADS_COUNT}')
-                bot.send_message(chat_id=from_user.id,
-                                 text=f'Ты нажал(а) на кнопку "Скачать" <b>{count_num}</b> раз(а).\n'
-                                      f'Дальнейшее скачивание ограничено!\n'
-                                      f'Ограничение пропадет <b>{next_counter_update_date} GMT</b>.\n',
-                                 parse_mode='HTML')
+                bot.send_message(
+                    chat_id=from_user.id,
+                    text=f'Ты нажал(а) на кнопку "Скачать" <b>{count_num}</b> раз(а).\n'
+                         f'Дальнейшее скачивание ограничено!\n'
+                         f'Разрешено скачать <b>{MAX_DOWNLOADS_COUNT} раз</b> за <b>{COUNTER_DAYS_INTERVAL} минут<b>.\n',
+                    parse_mode='HTML')
                 return
 
     return wrapped
@@ -227,6 +228,9 @@ def parse_msgs_history(bot, update, user_data):
     user = update.effective_user
     msg = update.effective_message
 
+    if not TARGET_CHAT_FOR_EXPORT:
+        user.send_message(text=f"TARGET_CHAT_FOR_EXPORT environment var is not set on server. Unable to export messages")
+
     file_obj = msg.document.get_file()
     filename = file_obj.download()
     file_data = Path(filename)
@@ -238,7 +242,7 @@ def parse_msgs_history(bot, update, user_data):
     parse_menu = Menu(buttons=MenuList.PARSING_BTN, col_num=2).build_menu()
     reply_markup = InlineKeyboardMarkup(parse_menu)
     user.send_message(
-        text=f"WARNING!!! DANGER ZONE!!!"
+        text=f"WARNING!!! DANGER ZONE!!!CANT BE STOPPED IF CONTINUED!!!"
              f" {len(dictionary)} will be exported to target chat {TARGET_CHAT_FOR_EXPORT}",
         reply_markup=reply_markup)
 
@@ -249,8 +253,12 @@ def abort_parsing(bot, from_user, query):
 
 
 def proceed_parsing(bot, from_user, query, user_data):
-    bot.send_message(chat_id=from_user.id,
-                     text=f'Here would be an export actions for {len(user_data["dictionary"])} msgs')
+    wait_time = 3.5
+    msgs_count = len(user_data["dictionary"])
+    bot.send_message(
+        chat_id=from_user.id,
+        text=f'Now export will be started. It took ~{(msgs_count * wait_time) / 60} minutes for {msgs_count} messages')
+    bot.delete_message(chat_id=from_user.id, message_id=query.message.message_id)
 
     for message in user_data["dictionary"]:
         start_menu = Menu(buttons=MenuList.DOWNLOAD_BTN, col_num=1).build_menu()
@@ -262,11 +270,8 @@ def proceed_parsing(bot, from_user, query, user_data):
                          text=text,
                          parse_mode='HTML',
                          reply_markup=reply_markup)
-        sleep(3.5)
+        sleep(wait_time)
 
-    bot.send_message(chat_id=from_user.id,
-                     text=f'{len(user_data["dictionary"])} msgs exported')
-
-    bot.delete_message(chat_id=from_user.id, message_id=query.message.message_id)
+    bot.send_message(chat_id=from_user.id, text=f'{len(user_data["dictionary"])} msgs exported')
 
 # endregion
