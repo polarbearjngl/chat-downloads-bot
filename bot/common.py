@@ -17,6 +17,8 @@ UPLOAD = 'upload'
 GET_CHAT_ID = 'get_chat_id'
 DOWNLOAD_FILE = 'download_file'
 GET_STATS = 'get_stats'
+START_MSGS_IMPORT = 'start_msgs_import'
+PARSE_MSGS_HISTORY = 'parse_msgs_history'
 
 
 def convert_size(size_bytes):

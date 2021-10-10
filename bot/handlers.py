@@ -1,9 +1,10 @@
+import json
 import os
 from datetime import datetime, timedelta
 from functools import wraps
 from pathlib import Path
 from bot.common import GET_DOCUMENT, DOWNLOAD_FILE, TARGET_CHAT, DATABASE_URL, convert_size, COUNTER_DAYS_INTERVAL, \
-    MAX_DOWNLOADS_COUNT
+    MAX_DOWNLOADS_COUNT, PARSE_MSGS_HISTORY
 from excel_tables.downloads_table import DownloadsTable
 from menu import Menu, MenuList
 from telegram import InlineKeyboardMarkup, Chat
@@ -205,3 +206,21 @@ def get_stats(bot, update):
     user.send_document(document=open(excel.filename, 'rb'))
     os.remove(excel.filename)
     downloads_db.close()
+
+
+@check_chat_type
+@restricted
+def start_msgs_import(bot, update):
+    bot.send_message(chat_id=update.effective_chat.id, text='Now will be started a msgs export. Upload JSON with history')
+    return PARSE_MSGS_HISTORY
+
+
+def parse_msgs_history(bot, update):
+    msg = update.effective_message
+
+    filename = msg.document.download()
+    file_obj = Path(filename)
+    with file_obj.open() as f:
+        dictionary = json.dumps(f)
+    bot.send_message(chat_id=TARGET_CHAT,
+                     text=len(dictionary["messages"]))
