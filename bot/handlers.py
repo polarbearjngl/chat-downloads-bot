@@ -218,9 +218,10 @@ def start_msgs_import(bot, update):
 def parse_msgs_history(bot, update):
     msg = update.effective_message
 
-    filename = msg.document.download()
-    file_obj = Path(filename)
-    with file_obj.open() as f:
+    file_obj = msg.document.get_file()
+    filename = file_obj.download()
+    file_data = Path(filename)
+    with file_data.open() as f:
         dictionary = json.dumps(f)
     bot.send_message(chat_id=TARGET_CHAT,
                      text=len(dictionary["messages"]))
