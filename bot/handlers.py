@@ -222,6 +222,6 @@ def parse_msgs_history(bot, update):
     filename = file_obj.download()
     file_data = Path(filename)
     with file_data.open() as f:
-        dictionary = json.dumps(f)
-    bot.send_message(chat_id=TARGET_CHAT,
-                     text=len(dictionary["messages"]))
+        dictionary = json.loads(f.read())
+        bot.send_message(chat_id=TARGET_CHAT,
+                         text=len(dictionary["messages"]))
